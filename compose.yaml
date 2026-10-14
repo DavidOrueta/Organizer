@@ -3,13 +3,15 @@ services:
     build:
       context: ./api
     ports:
-      - "8000:8000"
+      - "8000:8080"
     volumes:
       - ./api:/var/www/html
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: http://localhost:8000
+      APP_KEY: ${APP_KEY:-}
+      PORT: 8080
       DB_CONNECTION: mysql
       DB_URL: mysql://nexo:nexo-local@database:3306/nexo
       DB_HOST: database

@@ -42,9 +42,55 @@ Las capturas muestran el modo demostración con datos ficticios. No contienen da
 7. El primer registro de la base de datos obtiene el rol global `admin`. Organizer crea también **Mi primer proyecto** con código `ORG` y añade a esa cuenta como admin del proyecto.
 8. Los registros posteriores obtienen el rol global `member`. Para que puedan entrar a un proyecto, una persona admin debe añadirlos desde la vista **Equipo** usando el correo con el que ya se registraron.
 
-Compose inicia Vue en el puerto `5173`, Laravel en `8000` y MySQL en `3307` del host (`3306` dentro de Docker). El contenedor API instala dependencias, genera `APP_KEY` si falta y aplica migraciones al arrancar.
+Compose inicia Vue en el puerto `5173`, Laravel/Apache en `8000` y MySQL en `3307` del host (`3306` dentro de Docker). Composer instala dependencias al construir la imagen; el entrypoint crea una `APP_KEY` temporal en modo local y aplica migraciones al arrancar.
 
 Para detener los servicios, usa `docker compose down`. Los datos de MySQL están en el volumen `mysql_data` y se conservan. No añadas `-v` al comando si quieres conservarlos.
+
+## Publicar una demo en Vercel y Railway
+
+El repositorio incluye `vercel.json` y `api/railway.json`. La configuración de Vercel publica la SPA de Vue; Railway construye el backend desde su Dockerfile y comprueba `/up`.
+
+### 1. Desplegar el API en Railway
+
+1. Crea un proyecto en Railway y añade un servicio **MySQL**.
+2. Añade otro servicio desde este repositorio de GitHub y configura **Root Directory** como `/api`. Railway encontrará `api/railway.json` y `api/Dockerfile`.
+3. En las variables del servicio API añade:
+
+  ```text
+  APP_ENV=production
+  APP_DEBUG=false
+  APP_KEY=<clave-generada-para-esta-instalacion>
+  APP_URL=https://<dominio-del-api>
+  CORS_ALLOWED_ORIGINS=https://<dominio-de-vercel>
+  DB_CONNECTION=mysql
+  DB_HOST=${{MySQL.MYSQLHOST}}
+  DB_PORT=${{MySQL.MYSQLPORT}}
+  DB_DATABASE=${{MySQL.MYSQLDATABASE}}
+  DB_USERNAME=${{MySQL.MYSQLUSER}}
+  DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+  SESSION_DRIVER=file
+  CACHE_STORE=file
+  QUEUE_CONNECTION=sync
+  ```
+
+  Si Railway muestra el servicio de base con otro nombre, sustituye `MySQL` en las referencias. Railway proporciona `PORT`; el contenedor lo usa automáticamente. No subas `APP_KEY` ni contraseñas a Git.
+4. Genera una clave Laravel nueva localmente y pega el resultado completo en `APP_KEY` de Railway:
+
+  ```bash
+  docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+  ```
+
+5. Genera un dominio público para el servicio API. Railway ejecutará migraciones al arrancar y el health check consultará `https://<dominio-del-api>/up`.
+
+### 2. Desplegar Vue en Vercel
+
+1. Importa el mismo repositorio en Vercel y selecciona la raíz `.`.
+2. En las variables de entorno de Production añade `VITE_API_BASE_URL` con el dominio real de Railway y la ruta `/api/v1`, por ejemplo `https://organizer-api.up.railway.app/api/v1`.
+3. Despliega. `vercel.json` configura `npm ci`, `npm run build`, `dist` y el fallback SPA.
+4. Copia el dominio final de Vercel a `CORS_ALLOWED_ORIGINS` en Railway y vuelve a desplegar el API. Si usas un dominio personalizado, inclúyelo también, separado por comas.
+5. Abre la URL de Vercel y regístrate. En una base de datos vacía, esa primera cuenta obtiene el rol admin y crea el proyecto inicial.
+
+La parte de código queda preparada en el repositorio, pero la creación de servicios, dominios y variables secretas requiere iniciar sesión en tus cuentas de Railway y Vercel. No se guardan credenciales de despliegue en Git.
 
 ## Cómo se usa la web
 
