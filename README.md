@@ -2,7 +2,7 @@
 
 Organizer es un gestor de proyectos para equipos pequeños. Permite organizar proyectos en tableros Kanban, repartir tareas, seguir fechas, comentar el trabajo y revisar la carga del equipo.
 
-La interfaz está hecha con Vue 3 y Vite. El API REST usa Laravel 12, Sanctum y MySQL. Docker ejecuta PHP 8.4, necesario para las dependencias actuales del backend.
+La interfaz está hecha con Vue 3 y Vite. El API REST usa Laravel 12 y Sanctum. El entorno local usa MySQL; la demo pública gratuita usa SQLite temporal en Render. Docker ejecuta PHP 8.4, necesario para las dependencias actuales del backend.
 
 ## Capturas
 
@@ -46,51 +46,48 @@ Compose inicia Vue en el puerto `5173`, Laravel/Apache en `8000` y MySQL en `330
 
 Para detener los servicios, usa `docker compose down`. Los datos de MySQL están en el volumen `mysql_data` y se conservan. No añadas `-v` al comando si quieres conservarlos.
 
-## Publicar una demo en Vercel y Railway
+## Demo pública
 
-El repositorio incluye `vercel.json` y `api/railway.json`. La configuración de Vercel publica la SPA de Vue; Railway construye el backend desde su Dockerfile y comprueba `/up`.
+- **Frontend:** [organizer-snowy.vercel.app](https://organizer-snowy.vercel.app/)
+- **API:** [organizer-api-44v4.onrender.com](https://organizer-api-44v4.onrender.com/)
+- **Health check:** [organizer-api-44v4.onrender.com/up](https://organizer-api-44v4.onrender.com/up)
 
-### 1. Desplegar el API en Railway
+Vercel publica la SPA desde la raíz del repositorio con `vercel.json`. Render construye el API con `api/Dockerfile`, usando `api` como directorio raíz.
 
-1. Crea un proyecto en Railway y añade un servicio **MySQL**.
-2. Añade otro servicio desde este repositorio de GitHub y configura **Root Directory** como `/api`. Railway encontrará `api/railway.json` y `api/Dockerfile`.
-3. En las variables del servicio API añade:
+### Configuración del API en Render
 
-  ```text
-  APP_ENV=production
-  APP_DEBUG=false
-  APP_KEY=<clave-generada-para-esta-instalacion>
-  APP_URL=https://<dominio-del-api>
-  CORS_ALLOWED_ORIGINS=https://<dominio-de-vercel>
-  DB_CONNECTION=mysql
-  DB_HOST=${{MySQL.MYSQLHOST}}
-  DB_PORT=${{MySQL.MYSQLPORT}}
-  DB_DATABASE=${{MySQL.MYSQLDATABASE}}
-  DB_USERNAME=${{MySQL.MYSQLUSER}}
-  DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
-  SESSION_DRIVER=file
-  CACHE_STORE=file
-  QUEUE_CONNECTION=sync
-  ```
+El servicio `organizer-api` usa el plan gratuito de Render y estas variables:
 
-  Si Railway muestra el servicio de base con otro nombre, sustituye `MySQL` en las referencias. Railway proporciona `PORT`; el contenedor lo usa automáticamente. No subas `APP_KEY` ni contraseñas a Git.
-4. Genera una clave Laravel nueva localmente y pega el resultado completo en `APP_KEY` de Railway:
+```text
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=<clave-generada-para-esta-instalacion>
+APP_URL=https://organizer-api-44v4.onrender.com
+CORS_ALLOWED_ORIGINS=https://organizer-snowy.vercel.app
+DB_CONNECTION=sqlite
+DB_DATABASE=/tmp/organizer.sqlite
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+```
 
-  ```bash
-  docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
-  ```
+Genera una clave Laravel nueva localmente y configura el resultado en `APP_KEY`; no la subas a Git:
 
-5. Genera un dominio público para el servicio API. Railway ejecutará migraciones al arrancar y el health check consultará `https://<dominio-del-api>/up`.
+```bash
+docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+```
 
-### 2. Desplegar Vue en Vercel
+El endpoint `/up` sirve como comprobación de salud. El plan gratuito suspende el servicio tras periodos de inactividad, por lo que la primera petición puede tardar en despertarlo. La base SQLite está en el sistema de archivos temporal de Render: sus datos se pierden cuando el servicio se reinicia o se vuelve a desplegar. No uses esta demo para información importante.
 
-1. Importa el mismo repositorio en Vercel y selecciona la raíz `.`.
-2. En las variables de entorno de Production añade `VITE_API_BASE_URL` con el dominio real de Railway y la ruta `/api/v1`, por ejemplo `https://organizer-api.up.railway.app/api/v1`.
-3. Despliega. `vercel.json` configura `npm ci`, `npm run build`, `dist` y el fallback SPA.
-4. Copia el dominio final de Vercel a `CORS_ALLOWED_ORIGINS` en Railway y vuelve a desplegar el API. Si usas un dominio personalizado, inclúyelo también, separado por comas.
-5. Abre la URL de Vercel y regístrate. En una base de datos vacía, esa primera cuenta obtiene el rol admin y crea el proyecto inicial.
+### Configuración del frontend en Vercel
 
-La parte de código queda preparada en el repositorio, pero la creación de servicios, dominios y variables secretas requiere iniciar sesión en tus cuentas de Railway y Vercel. No se guardan credenciales de despliegue en Git.
+Importa el repositorio en Vercel con la raíz `.` y configura `VITE_API_BASE_URL` en Production:
+
+```text
+VITE_API_BASE_URL=https://organizer-api-44v4.onrender.com/api/v1
+```
+
+`vercel.json` configura `npm ci`, `npm run build`, `dist` y el fallback de la SPA. Si cambia el dominio de Vercel, actualiza `CORS_ALLOWED_ORIGINS` en Render para que coincida con el nuevo origen y vuelve a desplegar el API. En la demo pública, la primera cuenta registrada obtiene el rol admin y crea el proyecto inicial.
 
 ## Cómo se usa la web
 
