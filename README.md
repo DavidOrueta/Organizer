@@ -4,21 +4,23 @@ Organizer es un gestor de proyectos para equipos pequeños. Permite organizar pr
 
 La interfaz está hecha con Vue 3 y Vite. El API REST usa Laravel 12 y Sanctum. El entorno local usa MySQL; la demo pública gratuita usa SQLite temporal en Render. Docker ejecuta PHP 8.4, necesario para las dependencias actuales del backend.
 
-## Capturas
+## Capturas de la interfaz
 
-**Tablero de proyecto**
+Las capturas muestran la interfaz renovada de Organizer con datos ficticios del espacio de trabajo **Studio Norte**.
 
-![Tablero de Organizer con tareas agrupadas por estado](docs/screenshots/01-tablero.png)
+**Tablero Kanban** — tareas agrupadas por estado, con responsables, prioridades y fechas límite.
 
-**Resumen del proyecto y del equipo**
+![Tablero Kanban del proyecto Atlas mobile, con tareas pendientes, en curso y completadas](docs/screenshots/01-tablero.png)
 
-![Panel resumen con métricas, estados, carga de trabajo y próximos hitos](docs/screenshots/02-resumen.png)
+**Resumen del equipo** — métricas del proyecto, tareas por estado, carga de trabajo y próximos hitos.
 
-**Equipo y proyectos asociados**
+![Resumen del espacio de trabajo con métricas, progreso, carga por persona y próximos hitos](docs/screenshots/02-resumen.png)
 
-![Vista de miembros del equipo](docs/screenshots/03-equipo.png)
+**Equipo y proyectos** — miembros, tareas abiertas y proyectos compartidos en una vista de tarjetas.
 
-Las capturas muestran el modo demostración con datos ficticios. No contienen datos de una cuenta real.
+![Vista del equipo con personas, tareas abiertas y proyectos asociados](docs/screenshots/03-equipo.png)
+
+Las imágenes no contienen datos de cuentas reales.
 
 ## Requisitos
 
